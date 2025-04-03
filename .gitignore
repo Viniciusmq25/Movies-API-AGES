@@ -1,0 +1,38 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnpm-debug.log
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build directories
+dist/
+build/
+out/
+
+# Logs
+logs/
+*.log
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Prisma
+prisma/.env
+prisma/migrations/
+
+# Debug
+.debug

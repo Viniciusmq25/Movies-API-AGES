@@ -3,17 +3,17 @@ import { movies } from './movieController.js';
 export const createNota = (req, res) => { 
   const id = req.params.id;
   const nota = req.body;
-  const filme = movies[id];
+  const filme = movies[id]; 
   
-  if (nota < 0 || nota > 10) {
+  if (!filme) {
+    return res.status(404).send('Filme não encontrado.');
+  }
+  
+  if (!nota || Object.keys(nota).length > 1 || nota < 0 || nota > 10) {
     return res.status(400).send('Dados inválidos. A nota deve ser um número entre 0 e 10.');
   }
 
-  if (!nota) {
-    return res.status(400).send('Dados inválidos. O conteúdo da nota é obrigatório.');
-  }
-
-  filme.notas.push(nota);//adiciona a nota ao array de notas do filme
+  filme.notas.push(nota);
   res.send(`Nota adicionada com sucesso a ${filme.nome}`);
 }
 
@@ -66,10 +66,10 @@ export const deleteNota = (req, res) => {
 export const updateNota = (req, res) => {
   const id = req.params.id;
   const notaId = req.params.notaId;
-  const { content } = req.body;
+  const nota  = req.body;
   const filme = movies[id];
 
-  if (!content) {
+  if (!nota) {
     return res.status(400).send('Dados inválidos. O conteúdo da nota é obrigatório.');
   }
   
@@ -86,7 +86,7 @@ export const updateNota = (req, res) => {
       return res.status(404).send('Nota não encontrada.');
     }
 
-    filme.notas[notaId].content = content;
+    filme.notas[notaId] = nota;
 
     res.send(`Nota atualizada com sucesso: ${filme.notas[notaId]}`);
   } catch (error) {

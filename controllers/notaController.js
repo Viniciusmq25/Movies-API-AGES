@@ -4,12 +4,15 @@ export const createNota = (req, res) => {
   const id = req.params.id;
   const nota = req.body;
   const filme = movies[id]; 
-  
+  //printa o numero recebido em nota
+  console.log(nota['nota']);
+
+
   if (!filme) {
     return res.status(404).send('Filme não encontrado.');
   }
   
-  if (!nota || Object.keys(nota).length > 1 || nota < 0 || nota > 10) {
+  if (!nota['nota'] || Object.keys(nota).length > 1 || nota['nota'] < 0 || nota['nota'] > 10) {
     return res.status(400).send('Dados inválidos. A nota deve ser um número entre 0 e 10.');
   }
 

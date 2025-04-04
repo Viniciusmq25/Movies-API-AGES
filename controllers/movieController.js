@@ -6,6 +6,14 @@ export let movies = [
     ano: 1972,
     genero: "Crime",
     notas: []
+  } ,
+  {
+    nome: "Meu malvado favorito",
+    descricao: "Um malvado que é favorito",
+    diretor: "Chris Renaud e Pierre Coffin",
+    ano: 2010,
+    genero: "Animação",
+    notas: []
   }  
 ]
 

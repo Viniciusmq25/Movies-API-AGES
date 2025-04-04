@@ -60,7 +60,7 @@ export const deleteNota = (req, res) => {
     const notaDeletada = filme.notas[notaId];
     filme.notas.splice(notaId, 1);
 
-    res.send(`Nota deletada com sucesso: ${notaDeletada.content}`);
+    res.send(`Nota deletada com sucesso`);
   } catch (error) {
     res.status(404).send('Nota não encontrada.');
   }
@@ -91,7 +91,7 @@ export const updateNota = (req, res) => {
 
     filme.notas[notaId] = nota;
 
-    res.send(`Nota atualizada com sucesso: ${filme.notas[notaId]}`);
+    res.send(`Nota atualizada com sucesso`);
   } catch (error) {
     res.status(404).send('Nota não encontrada.');
   }

@@ -1,0 +1,35 @@
+-API-AGES/prisma/schema.prisma
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Movie {
+  id        Int     @id @default(autoincrement())
+  nome      String
+  descricao String
+  diretor   String
+  ano       Int
+  genero    String
+  notas     Nota[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Nota {
+  id        Int      @id @default(autoincrement())
+  nota      Float
+  movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  movieId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([movieId])
+}

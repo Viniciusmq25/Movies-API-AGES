@@ -1,18 +1,20 @@
 # Node.js
 node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-.pnpm-debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
+
+# Package files
 package-lock.json
 yarn.lock
+pnpm-lock.yaml
 
 # Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 
 # Build directories
 dist/
@@ -25,14 +27,33 @@ logs/
 
 # Editor directories and files
 .idea/
-.vscode/
-*.swp
-*.swo
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 .DS_Store
+Thumbs.db
 
 # Prisma
 prisma/.env
-prisma/migrations/
+prisma/migrations/dev/
+.prisma/client/
+
+# SQLite database files
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Testing
+coverage/
+.nyc_output/
 
 # Debug
 .debug
+.pnpm-store

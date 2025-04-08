@@ -1,7 +1,7 @@
-import express from 'express';
+import express, { Router } from 'express';
 import { createNota, getNotas, getNota, deleteNota, updateNota } from "../controllers/notaController.js";
 
-const router = express.Router();
+const router: Router = express.Router();
 
 router.get('/:id/notas', getNotas); //rota para pegar todas as notas de um filme rota de exemplo: http://localhost:5000/movies/0/notas
 

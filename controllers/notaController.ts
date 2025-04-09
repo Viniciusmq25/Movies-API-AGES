@@ -1,112 +1,178 @@
 import { Request, Response } from 'express';
-import { movies } from './movieController.js';
+import prisma from '../prisma/client.js';
 
 interface Nota {
   nota: number;
 }
 
-export const createNota = (req: Request, res: Response): void => { 
+export const createNota = async (req: Request, res: Response): Promise<void> => { 
   const id: number = parseInt(req.params.id);
-  const nota: Nota = req.body;
-  const filme = movies[id]; 
-  //printa o numero recebido em nota
-  console.log(nota['nota']);
+  const { nota } = req.body;
+  console.log(nota);
 
-  if (!filme) {
-    res.status(404).send('Filme não encontrado.');
-    return;
-  }
-  
-  if (!nota['nota'] || Object.keys(nota).length > 1 || nota['nota'] < 0 || nota['nota'] > 10) {
-    res.status(400).send('Dados inválidos. A nota deve ser um número entre 0 e 10.');
-    return;
-  }
-
-  filme.notas.push(nota);
-  res.send(`Nota adicionada com sucesso a ${filme.nome}`);
-}
-
-export const getNotas = (req: Request, res: Response): void => {
-  const id: number = parseInt(req.params.id);
-  const filme = movies[id];
-  const movieNotes = filme.notas;
-  res.send(movieNotes);
-}
-
-export const getNota = (req: Request, res: Response): void => {
-  const id: number = parseInt(req.params.id);
-  const notaId: number = parseInt(req.params.notaId);
-  const filme = movies[id];
-
-  if (!filme) {
-    res.status(404).send('Filme não encontrado.');
-    return;
-  }
-
-  if (notaId < 0 || notaId >= filme.notas.length) {
-    res.status(404).send('Nota não encontrada.');
-    return;
-  }
-
-  res.send({ nota: filme.notas[notaId] });
-}
-
-export const deleteNota = (req: Request, res: Response): void => {
-  const id: number = parseInt(req.params.id);
-  const notaId: number = parseInt(req.params.notaId);
-  const filme = movies[id];
-  
-  try {
-    if (!filme) {
-      res.status(404).send('Filme não encontrado.');
-      return;
-    }
-    
-    if (notaId < 0 || notaId >= filme.notas.length) {
-      res.status(404).send('Nota não encontrada.');
-      return;
-    }
-
-    const notaDeletada = filme.notas[notaId];
-    filme.notas.splice(notaId, 1);
-
-    res.send(`Nota deletada com sucesso: ${notaDeletada.content}`);
-  } catch (error) {
-    res.status(404).send('Nota não encontrada.');
-  }
-}
-
-export const updateNota = (req: Request, res: Response): void => {
-  const id: number = parseInt(req.params.id);
-  const notaId: number = parseInt(req.params.notaId);
-  const nota: Nota = req.body;
-  const filme = movies[id];
-
-  if (!nota) {
-    res.status(400).send('Dados inválidos. O conteúdo da nota é obrigatório.');
-    return;
-  }
-  
-  if (nota.nota < 0 || nota.nota > 10) {
+  if (nota === undefined || Object.keys(req.body).length > 1 || nota < 0 || nota > 10) {
     res.status(400).send('Dados inválidos. A nota deve ser um número entre 0 e 10.');
     return;
   }
 
   try {
-    if (!filme) {
+    const movie = await prisma.movie.findUnique({
+      where: { id }
+    });
+
+    if (!movie) {
       res.status(404).send('Filme não encontrado.');
       return;
     }
     
-    if (notaId < 0 || notaId >= filme.notas.length) {
+    const newNota = await prisma.nota.create({
+      data: {
+        nota,
+        movieId: id
+      }
+    });
+
+    res.status(201).send(`Nota adicionada com sucesso a ${movie.nome}`);
+  } catch (error) {
+    console.error("Error creating nota:", error);
+    res.status(500).send('Erro ao adicionar nota.');
+  }
+}
+
+export const getNotas = async (req: Request, res: Response): Promise<void> => {
+  const id: number = parseInt(req.params.id);
+  
+  try {
+    const movie = await prisma.movie.findUnique({
+      where: { id }
+    });
+
+    if (!movie) {
+      res.status(404).send('Filme não encontrado.');
+      return;
+    }
+
+    const notas = await prisma.nota.findMany({
+      where: { movieId: id }
+    });
+
+    res.send(notas);
+  } catch (error) {
+    console.error("Error fetching notas:", error);
+    res.status(500).send('Erro ao buscar notas.');
+  }
+}
+
+export const getNota = async (req: Request, res: Response): Promise<void> => {
+  const movieId: number = parseInt(req.params.id);
+  const notaId: number = parseInt(req.params.notaId);
+  
+  try {
+    const movie = await prisma.movie.findUnique({
+      where: { id: movieId }
+    });
+
+    if (!movie) {
+      res.status(404).send('Filme não encontrado.');
+      return;
+    }
+
+    const nota = await prisma.nota.findFirst({
+      where: { 
+        id: notaId,
+        movieId: movieId 
+      }
+    });
+
+    if (!nota) {
       res.status(404).send('Nota não encontrada.');
       return;
     }
 
-    filme.notas[notaId] = nota;
-
-    res.send(`Nota atualizada com sucesso: ${filme.notas[notaId]}`);
+    res.send(nota);
   } catch (error) {
-    res.status(404).send('Nota não encontrada.');
+    console.error("Error fetching nota:", error);
+    res.status(500).send('Erro ao buscar nota.');
+  }
+}
+
+export const deleteNota = async (req: Request, res: Response): Promise<void> => {
+  const movieId: number = parseInt(req.params.id);
+  const notaId: number = parseInt(req.params.notaId);
+  
+  try {
+    const movie = await prisma.movie.findUnique({
+      where: { id: movieId }
+    });
+
+    if (!movie) {
+      res.status(404).send('Filme não encontrado.');
+      return;
+    }
+
+    const nota = await prisma.nota.findFirst({
+      where: { 
+        id: notaId,
+        movieId: movieId 
+      }
+    });
+
+    if (!nota) {
+      res.status(404).send('Nota não encontrada.');
+      return;
+    }
+
+    await prisma.nota.delete({
+      where: { id: notaId }
+    });
+
+    res.send(`Nota deletada com sucesso.`);
+  } catch (error) {
+    console.error("Error deleting nota:", error);
+    res.status(500).send('Erro ao deletar nota.');
+  }
+}
+
+export const updateNota = async (req: Request, res: Response): Promise<void> => {
+  const movieId: number = parseInt(req.params.id);
+  const notaId: number = parseInt(req.params.notaId);
+  const { nota } = req.body;
+  
+  if (nota === undefined || nota < 0 || nota > 10) {
+    res.status(400).send('Dados inválidos. A nota deve ser um número entre 0 e 10.');
+    return;
+  }
+
+  try {
+    const movie = await prisma.movie.findUnique({
+      where: { id: movieId }
+    });
+
+    if (!movie) {
+      res.status(404).send('Filme não encontrado.');
+      return;
+    }
+
+    const existingNota = await prisma.nota.findFirst({
+      where: { 
+        id: notaId,
+        movieId: movieId 
+      }
+    });
+
+    if (!existingNota) {
+      res.status(404).send('Nota não encontrada.');
+      return;
+    }
+
+    const updatedNota = await prisma.nota.update({
+      where: { id: notaId },
+      data: { nota }
+    });
+
+    res.send(`Nota atualizada com sucesso.`);
+  } catch (error) {
+    console.error("Error updating nota:", error);
+    res.status(500).send('Erro ao atualizar nota.');
   }
 }

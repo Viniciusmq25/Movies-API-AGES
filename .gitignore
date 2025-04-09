@@ -1,31 +1,35 @@
-# Node.js
+# Dependencies
 node_modules/
+/.pnp
+.pnp.js
+
+# Package manager logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 lerna-debug.log*
 
-# Package files
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# Package lock files (uncomment if needed)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
 
 # Environment variables
 .env
 .env.*
 !.env.example
 
-# Build directories
+# Build output
 dist/
 build/
 out/
 
-# Logs
+# Log files
 logs/
 *.log
 
-# Editor directories and files
+# Editors and IDEs
 .idea/
 .vscode/*
 !.vscode/extensions.json
@@ -36,15 +40,19 @@ logs/
 *.njsproj
 *.sln
 *.sw?
+
+# OS files
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # Prisma
 prisma/.env
-prisma/migrations/dev/
 .prisma/client/
+prisma/dev.db
+prisma/dev.db-journal
 
-# SQLite database files
+# Database files
 *.sqlite
 *.sqlite3
 *.db
@@ -54,6 +62,11 @@ prisma/migrations/dev/
 coverage/
 .nyc_output/
 
-# Debug
+# TypeScript
+*.tsbuildinfo
+
+# Debug and cache
 .debug
 .pnpm-store
+.npm
+.eslintcache

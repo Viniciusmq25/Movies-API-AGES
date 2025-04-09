@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import prisma from '../prisma/client.js';
 
 interface Movie {
   nome: string;
@@ -6,104 +7,140 @@ interface Movie {
   diretor: string;
   ano: number;
   genero: string;
-  notas: any[];
 }
 
-export let movies: Movie[] = [
-  {
-    nome: "O Poderoso Chefão",
-    descricao: "O Poderoso Chefão é um filme de crime de 1972 dirigido por Francis Ford Coppola e produzido por Albert S. Ruddy, com roteiro de Mario Puzo e Coppola. É estrelado por Marlon Brando, Al Pacino, James Caan, Richard S. Castellano, Robert Duvall, Sterling Hayden, John Marley, Richard Conte e Diane Keaton.",
-    diretor: "Francis Ford Coppola",
-    ano: 1972,
-    genero: "Crime",
-    notas: []
-  } ,
-  {
-    nome: "Meu malvado favorito",
-    descricao: "Um malvado que é favorito",
-    diretor: "Chris Renaud e Pierre Coffin",
-    ano: 2010,
-    genero: "Animação",
-    notas: []
-  }  
-]
-
-export const createMovie = (req: Request, res: Response): void => {
+export const createMovie = async (req: Request, res: Response): Promise<void> => {
   console.log('POST ROUTE REACHED')
   const {nome, descricao, diretor, ano, genero} = req.body;
+  
   if (!nome || !descricao || !diretor || !ano || !genero) {
-    res.send('Dados inválidos. Preencha todos os campos.');
+    res.status(400).send('Dados inválidos. Preencha todos os campos.');
     return;
   } 
-  if (incluiFilme(nome)){//verifica se o nome do filme já existe no array de filmes
-    res.status(400).send('Dados inválidos. O filme já existe.');
-    return;
-  }
-
-  const filme: Movie = {...req.body, notas: []};
-  movies.push(filme);
-
-  res.send(`Filme ${filme.nome} adicionado com sucesso.`);
-}
-
-export const getMovies = (req: Request, res: Response): void => {
-  if (movies.length === 0) {
-    res.status(404).send('Nenhum filme encontrado.');
-    return;
-  }
   
-  res.send(movies);
+  try {
+    // Check if movie with same name exists
+    const existingMovie = await prisma.movie.findFirst({
+      where: { nome }
+    });
+    
+    if (existingMovie) {
+      res.status(400).send('Dados inválidos. O filme já existe.');
+      return;
+    }
+
+    const newMovie = await prisma.movie.create({
+      data: {
+        nome,
+        descricao,
+        diretor,
+        ano,
+        genero
+      }
+    });
+
+    res.status(201).send(`Filme ${newMovie.nome} adicionado com sucesso.`);
+  } catch (error) {
+    console.error("Error creating movie:", error);
+    res.status(500).send('Erro ao adicionar filme.');
+  }
 }
 
-export const getMovie = (req: Request, res: Response): void => {
+export const getMovies = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const movies = await prisma.movie.findMany({
+      include: {
+        notas: true
+      }
+    });
+    
+    if (movies.length === 0) {
+      res.status(404).send('Nenhum filme encontrado.');
+      return;
+    }
+    
+    res.send(movies);
+  } catch (error) {
+    console.error("Error fetching movies:", error);
+    res.status(500).send('Erro ao buscar filmes.');
+  }
+}
+
+export const getMovie = async (req: Request, res: Response): Promise<void> => {
   const id: number = parseInt(req.params.id);
 
-  const filme: Movie = movies[id];
-  if(!filme) {
-    res.status(404).send('Filme não encontrado.');
-    return;
-  }
+  try {
+    const movie = await prisma.movie.findUnique({
+      where: { id },
+      include: {
+        notas: true
+      }
+    });
+    
+    if (!movie) {
+      res.status(404).send('Filme não encontrado.');
+      return;
+    }
 
-  res.send(filme);
+    res.send(movie);
+  } catch (error) {
+    console.error("Error fetching movie:", error);
+    res.status(500).send('Erro ao buscar filme.');
+  }
 }
 
-export const deleteMovie = (req: Request, res: Response): void => {
+export const deleteMovie = async (req: Request, res: Response): Promise<void> => {
   const id: number = parseInt(req.params.id);
-  const filme: Movie = movies[id];
+  
+  try {
+    const movie = await prisma.movie.findUnique({
+      where: { id }
+    });
 
-  if (!filme) {
-    res.status(404).send('Filme não encontrado.');
-    return;
+    if (!movie) {
+      res.status(404).send('Filme não encontrado.');
+      return;
+    }
+
+    await prisma.movie.delete({
+      where: { id }
+    });
+    
+    res.send(`Filme ${movie.nome} deletado com sucesso.`);
+  } catch (error) {
+    console.error("Error deleting movie:", error);
+    res.status(500).send('Erro ao deletar filme.');
   }
-
-  movies.splice(id, 1); //splice é utilizado para remover um elemento de um array
-  res.send(`Filme ${filme.nome} deletado com sucesso.`);
 }
 
-export const updateMovie = (req: Request, res: Response): void => { //patch é utilizado para atualizar um recurso específico
+export const updateMovie = async (req: Request, res: Response): Promise<void> => {
   const id: number = parseInt(req.params.id);
   const {nome, descricao, diretor, ano, genero} = req.body;
-  const filme: Movie = movies[id];
+  
+  try {
+    const movie = await prisma.movie.findUnique({
+      where: { id }
+    });
 
-  if (!filme) {
-    res.status(404).send('Filme não encontrado.');
-    return;
-  }
-
-  if (nome) {filme.nome = nome;}
-  if (descricao) {filme.descricao = descricao;}
-  if (diretor) {filme.diretor = diretor;}
-  if (ano) {filme.ano = ano;}
-  if (genero) {filme.genero = genero;}
-
-  res.send(`Filme ${filme.nome} atualizado com sucesso.`);
-}
-
-function incluiFilme(nome: string): boolean {
-  for (let i = 0; i < movies.length; i++) {
-    if (movies[i].nome === nome) {
-      return true;
+    if (!movie) {
+      res.status(404).send('Filme não encontrado.');
+      return;
     }
+
+    const updatedMovie = await prisma.movie.update({
+      where: { id },
+      data: {
+        ...(nome && { nome }),
+        ...(descricao && { descricao }),
+        ...(diretor && { diretor }),
+        ...(ano && { ano }),
+        ...(genero && { genero })
+      }
+    });
+
+    res.send(`Filme ${updatedMovie.nome} atualizado com sucesso.`);
+  } catch (error) {
+    console.error("Error updating movie:", error);
+    res.status(500).send('Erro ao atualizar filme.');
   }
-  return false;
 }
